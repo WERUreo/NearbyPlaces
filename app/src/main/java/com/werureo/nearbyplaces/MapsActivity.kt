@@ -8,7 +8,6 @@ import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
-import android.widget.Toast
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -21,13 +20,13 @@ import com.google.android.gms.maps.model.MarkerOptions
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
-    private lateinit var mMap: GoogleMap
+    private lateinit var googleMap: GoogleMap
     private var latitude: Double = 0.toDouble()
     private var longitude: Double = 0.toDouble()
 
-    private lateinit var mLastLocation: Location
+    private lateinit var lastLocation: Location
     private var locationPermissionGranted: Boolean = false
-    private var mMarker: Marker? = null
+    private var marker: Marker? = null
 
     // Location
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
@@ -71,23 +70,23 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(p0: LocationResult?) {
                 if (p0 != null) {
-                    mLastLocation = p0.lastLocation
+                    lastLocation = p0.lastLocation
 
-                    mMarker?.remove()
+                    marker?.remove()
 
-                    latitude = mLastLocation.latitude
-                    longitude = mLastLocation.longitude
+                    latitude = lastLocation.latitude
+                    longitude = lastLocation.longitude
 
                     val latLng = LatLng(latitude, longitude)
                     val markerOptions = MarkerOptions()
                             .position(latLng)
                             .title("Your position")
                             .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN))
-                    mMarker = mMap.addMarker(markerOptions)
+                    marker = googleMap.addMarker(markerOptions)
 
                     // Move camera
-                    mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng))
-                    mMap.animateCamera(CameraUpdateFactory.zoomTo(DEFAULT_ZOOM))
+                    googleMap.moveCamera(CameraUpdateFactory.newLatLng(latLng))
+                    googleMap.animateCamera(CameraUpdateFactory.zoomTo(DEFAULT_ZOOM))
                 }
             }
 
@@ -120,11 +119,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun updateLocationUI() {
         try {
             if (locationPermissionGranted) {
-                mMap.isMyLocationEnabled = true
-                mMap.uiSettings.isMyLocationButtonEnabled = true
+                googleMap.isMyLocationEnabled = true
+                googleMap.uiSettings.isMyLocationButtonEnabled = true
             } else {
-                mMap.isMyLocationEnabled = false
-                mMap.uiSettings.isMyLocationButtonEnabled = false
+                googleMap.isMyLocationEnabled = false
+                googleMap.uiSettings.isMyLocationButtonEnabled = false
                 getLocationPermission()
             }
         } catch (e: SecurityException) {
@@ -132,17 +131,17 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-    // Override OnRequestPermissionsResult
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        locationPermissionGranted = false
+
         when (requestCode) {
             PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION -> {
                 if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     locationPermissionGranted = true
-                } else {
-                    Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show()
                 }
             }
         }
+        updateLocationUI()
     }
 
     /**
@@ -155,13 +154,18 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
      * installed Google Play services and returned to the app.
      */
     override fun onMapReady(googleMap: GoogleMap) {
-        mMap = googleMap
+        this.googleMap = googleMap
 
+        // Prompt the user for permission
         getLocationPermission()
+
+        // Turn on the My Location layer and the related control on the map
         updateLocationUI()
+
+        // Get the current location of the device and set the position of the map
         getDeviceLocation()
 
         // Enable Zoom control
-        mMap.uiSettings.isZoomControlsEnabled = true
+        this.googleMap.uiSettings.isZoomControlsEnabled = true
     }
 }
