@@ -4,6 +4,10 @@ apply plugin: 'kotlin-android-extensions'
 
 android {
     compileSdkVersion 27
+
+    Properties properties = new Properties()
+    properties.load(project.rootProject.file("local.properties").newDataInputStream())
+
     defaultConfig {
         applicationId "com.werureo.nearbyplaces"
         minSdkVersion 19
@@ -11,6 +15,8 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        resValue "string", "google_maps_key", (properties.getProperty("GOOGLE_MAPS_API_KEY") ?: "")
+        resValue "string", "browser_key", (properties.getProperty("BROWSER_KEY") ?: "")
     }
     buildTypes {
         release {
